@@ -353,3 +353,43 @@ func TestRegression6(t *testing.T) {
 		t.Errorf("Wrong value from /128 test, got %d, expected 12345", inf)
 	}
 }
+
+func TestRegressionCollision1(t *testing.T) {
+	tr := NewTree(0)
+	if tr == nil || tr.root == nil {
+		t.Error("Did not create tree properly")
+	}
+	// in one of the implementations /128 addresses were causing panic...
+	addErr := tr.AddCIDR("42.0.0.0/22", 54321)
+	if addErr != nil {
+		t.Errorf("error while adding value for ipv4: %s", addErr)
+	}
+	tr.AddCIDR("::ffff:2a01:0000/118", 12345)
+
+	inf, err := tr.FindCIDR("2a00::/22")
+	if err != nil {
+		t.Errorf("Could not get /22 address from the tree, error: %s", err)
+	} else if inf != nil {
+		t.Errorf("Wrong value from /22 test, got %d, expected nil", inf)
+	}
+
+	inf, err = tr.FindCIDR("42.0.0.0/22")
+	if err != nil {
+		t.Errorf("Could not get /22 address from the tree, error: %s", err)
+	} else if inf == nil {
+		t.Errorf("Wrong value from /22 test, got nil, expected 54321")
+	} else if inf.(int) != 54321 {
+		t.Errorf("Wrong value from /22 test, got %d, expected 54321", inf)
+
+	}
+
+	inf, err = tr.FindCIDR("::ffff:2a01:0000/118")
+	if err != nil {
+		t.Errorf("Could not get /118 address from the tree, error: %s", err)
+	} else if inf == nil {
+		t.Errorf("Wrong value from /118 test, got nil, expected 12345")
+	} else if inf.(int) != 12345 {
+		t.Errorf("Wrong value from /118 test, got %d, expected 12345", inf)
+
+	}
+}
